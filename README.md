@@ -1,17 +1,31 @@
-# fit_lab
+# FitLab 
 
-A new Flutter project.
+FitLab is a Pinterest-inspired wardrobe and outfit generation app built with Flutter.
 
-## Getting Started
+Users can:
+- add clothing pieces
+- organize outfits by mood
+- generate aesthetic outfit combinations
+- explore different style vibes
+- enjoy a handcrafted, animated UI experience
 
-This project is a starting point for a Flutter application.
+## Features
 
-A few resources to get you started if this is your first Flutter project:
+- Mood-based outfit generation
+- Responsive Pinterest-style wardrobe grid
+- Dark/light mode
+- Animated UI interactions
+- Custom app branding
+- Local database storage
+- Aesthetic editorial-inspired design
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Built With
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Flutter
+- Dart
+- SQLite
+- Material Design 3
+
+## Author
+
+crafted with ♡ by manal
