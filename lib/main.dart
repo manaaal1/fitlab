@@ -43,8 +43,10 @@ Future<void> main() async {
     // One-off move of photos that older builds left in the picker cache.
     await wardrobeRepository.relocateLegacyImages();
   } catch (e) {
-    debugPrint('Legacy image reloc'
-        '+ation skipped: $e');
+    debugPrint(
+      'Legacy image reloc'
+      '+ation skipped: $e',
+    );
   }
 
   runApp(
