@@ -67,6 +67,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     );
 
     await DatabaseService.insertClothing(item);
+    if (!mounted) return;
 
     Navigator.pop(context, true);
   }

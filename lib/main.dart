@@ -1,190 +1,61 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'screens/add_clothing_screen.dart';
-import 'models/clothing_item.dart';
-import 'widgets/clothing_card.dart';
-import 'services/database_service.dart';
-import 'screens/outfit_generator_screen.dart';
-import 'theme/app_theme.dart';
-import 'package:provider/provider.dart';
-import 'widgets/signature_footer.dart';
-import 'widgets/empty_state.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import 'providers/theme_provider.dart';
+import 'app/app.dart';
+import 'core/utils/image_storage.dart';
+import 'data/backup/backup_service.dart';
+import 'data/database/app_database.dart';
+import 'data/repositories/outfit_repository.dart';
+import 'data/repositories/wardrobe_repository.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Fonts ship in assets/google_fonts, so never download them at runtime.
+  GoogleFonts.config.allowRuntimeFetching = false;
+  LicenseRegistry.addLicense(() async* {
+    for (final family in ['poppins', 'caveat']) {
+      final text = await rootBundle.loadString(
+        'assets/google_fonts/OFL-$family.txt',
+      );
+      yield LicenseEntryWithLineBreaks(['google_fonts'], text);
+    }
+  });
+
+  // sqflite has no Windows/Linux implementation; use the FFI backend there.
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
+  final prefs = await SharedPreferences.getInstance();
+  final images = await ImageStorage.create();
+  final db = await AppDatabase.open(path: await AppDatabase.defaultPath());
+  final wardrobeRepository = WardrobeRepository(db, images);
+
+  try {
+    // One-off move of photos that older builds left in the picker cache.
+    await wardrobeRepository.relocateLegacyImages();
+  } catch (e) {
+    debugPrint('Legacy image reloc'
+        '+ation skipped: $e');
+  }
+
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
-
-      child: const FitLabApp(),
+    FitLabApp(
+      dependencies: AppDependencies(
+        prefs: prefs,
+        images: images,
+        wardrobeRepository: wardrobeRepository,
+        outfitRepository: OutfitRepository(db),
+        backup: BackupService(db, images),
+      ),
     ),
   );
-}
-
-class FitLabApp extends StatelessWidget {
-  const FitLabApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-
-          theme: AppTheme.lightTheme,
-
-          darkTheme: AppTheme.darkTheme,
-
-          themeMode: themeProvider.themeMode,
-
-          home: const HomeScreen(),
-        );
-      },
-    );
-  }
-}
-
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  List<ClothingItem> wardrobe = [];
-
-  @override
-  void initState() {
-    super.initState();
-
-    loadWardrobe();
-  }
-
-  Future<void> loadWardrobe() async {
-    final items = await DatabaseService.getClothingItems();
-
-    setState(() {
-      wardrobe = items;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('FitLab'),
-        actions: [
-          Consumer<ThemeProvider>(
-            builder: (context, themeProvider, child) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 12),
-
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.wb_sunny_rounded,
-
-                      color: themeProvider.isDarkMode
-                          ? Colors.grey
-                          : Colors.orange,
-                    ),
-
-                    Switch(
-                      value: themeProvider.isDarkMode,
-
-                      onChanged: (value) {
-                        themeProvider.toggleTheme();
-                      },
-                    ),
-
-                    Icon(
-                      Icons.nightlight_round,
-
-                      color: themeProvider.isDarkMode
-                          ? Colors.deepPurpleAccent
-                          : Colors.grey,
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-        centerTitle: true,
-      ),
-
-      body: wardrobe.isEmpty
-          ? const EmptyState(
-              icon: Icons.checkroom_rounded,
-
-              title: 'your wardrobe is feeling a little empty ♡',
-
-              subtitle:
-                  'add your favorite pieces to start building outfits and aesthetics.',
-            )
-          : MasonryGridView.count(
-              crossAxisCount: 3,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              itemCount: wardrobe.length,
-
-              itemBuilder: (context, index) {
-                return ClothingCard(
-                  item: wardrobe[index],
-
-                  onDelete: () async {
-                    await DatabaseService.deleteClothing(wardrobe[index].id!);
-
-                    loadWardrobe();
-                  },
-                );
-              },
-            ),
-
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-
-        children: [
-          FloatingActionButton(
-            heroTag: 'generate',
-
-            onPressed: () {
-              Navigator.push(
-                context,
-
-                MaterialPageRoute(
-                  builder: (_) => OutfitGeneratorScreen(wardrobe: wardrobe),
-                ),
-              );
-            },
-
-            child: const Icon(Icons.auto_awesome),
-          ),
-
-          const SizedBox(height: 15),
-
-          FloatingActionButton(
-            heroTag: 'add',
-
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-
-                MaterialPageRoute(builder: (_) => const AddClothingScreen()),
-              );
-
-              if (result == true) {
-                loadWardrobe();
-              }
-            },
-
-            child: const Icon(Icons.add),
-          ),
-          const SignatureFooter(),
-        ],
-      ),
-    );
-  }
 }
