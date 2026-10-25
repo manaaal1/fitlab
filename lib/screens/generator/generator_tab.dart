@@ -2,7 +2,7 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-
+import 'dart:math';
 import '../../core/constants/moods.dart';
 import '../../data/models/clothing_item.dart';
 import '../../domain/outfit_generator.dart';
@@ -18,12 +18,16 @@ import '../item_actions.dart';
 import '../share_look.dart';
 
 class GeneratorTab extends StatefulWidget {
-  const GeneratorTab({super.key, this.revealDelay = defaultRevealDelay});
+  const GeneratorTab({
+    super.key,
+    this.revealDelay = defaultRevealDelay,
+    this.random,
+  });
 
   static const defaultRevealDelay = Duration(milliseconds: 750);
 
-  /// Short pause so the "curating" animation can play. Zero in tests.
   final Duration revealDelay;
+  final Random? random;
 
   @override
   State<GeneratorTab> createState() => _GeneratorTabState();
@@ -69,6 +73,7 @@ class _GeneratorTabState extends State<GeneratorTab> {
       _result = OutfitGenerator.generate(
         wardrobe: wardrobe,
         mood: mood,
+        random: widget.random,
         avoidIds: avoid,
         locked: locked,
       );

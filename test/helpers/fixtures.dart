@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'dart:math';
 import 'package:fit_lab/app/app.dart';
 import 'package:fit_lab/core/constants/categories.dart';
 import 'package:fit_lab/core/constants/moods.dart';
@@ -74,5 +74,7 @@ Future<AppDependencies> testDependencies({
     wardrobeRepository: wardrobe,
     outfitRepository: OutfitRepository(db),
     backup: BackupService(db, images),
+    generatorRandom: Random(9),
+    clock: () => DateTime(2026, 10, 6),
   );
 }

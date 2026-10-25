@@ -13,6 +13,7 @@ import '../providers/wardrobe_provider.dart';
 import '../screens/home/root_shell.dart';
 import '../screens/onboarding/onboarding_screen.dart';
 import '../theme/app_theme.dart';
+import 'dart:math';
 
 /// Everything the widget tree needs from outside Flutter. Built once in
 /// `main` (or with in-memory fakes in tests).
@@ -23,6 +24,8 @@ class AppDependencies {
     required this.wardrobeRepository,
     required this.outfitRepository,
     required this.backup,
+    this.generatorRandom,
+    this.clock,
   });
 
   final SharedPreferences prefs;
@@ -30,6 +33,8 @@ class AppDependencies {
   final WardrobeRepository wardrobeRepository;
   final OutfitRepository outfitRepository;
   final BackupService backup;
+  final Random? generatorRandom;
+  final DateTime Function()? clock;
 }
 
 class FitLabApp extends StatelessWidget {
@@ -61,8 +66,11 @@ class FitLabApp extends StatelessWidget {
           )..load(),
         ),
         ChangeNotifierProvider(
-          create: (_) => OutfitsProvider(dependencies.outfitRepository)..load(),
-        ),
+  create: (_) => OutfitsProvider(
+    dependencies.outfitRepository,
+    clock: dependencies.clock,
+  )..load(),
+),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settings, _) => MaterialApp(
@@ -77,6 +85,7 @@ class FitLabApp extends StatelessWidget {
                 ? RootShell(
                     key: const ValueKey('shell'),
                     generatorRevealDelay: generatorRevealDelay,
+                    generatorRandom: dependencies.generatorRandom,
                   )
                 : const OnboardingScreen(key: ValueKey('onboarding')),
           ),

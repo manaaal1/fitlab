@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/style_request.dart';
-
+import 'dart:math';
 import '../generator/generator_tab.dart';
 import '../item_actions.dart';
 import '../saved_outfits/looks_tab.dart';
@@ -13,10 +13,10 @@ import 'wardrobe_tab.dart';
 /// Top-level layout: a bottom navigation bar on phones and a navigation
 /// rail on wide screens, switching between Wardrobe, Generate and Looks.
 class RootShell extends StatefulWidget {
-  const RootShell({super.key, this.generatorRevealDelay});
+  const RootShell({super.key, this.generatorRevealDelay, this.generatorRandom});
 
   final Duration? generatorRevealDelay;
-
+  final Random? generatorRandom;
   @override
   State<RootShell> createState() => _RootShellState();
 }
@@ -54,6 +54,7 @@ class _RootShellState extends State<RootShell> {
         GeneratorTab(
           revealDelay:
               widget.generatorRevealDelay ?? GeneratorTab.defaultRevealDelay,
+          random: widget.generatorRandom,
         ),
         LooksTab(onGoToGenerator: () => _select(1)),
       ],

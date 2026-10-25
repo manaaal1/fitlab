@@ -6,9 +6,11 @@ import '../data/models/outfit.dart';
 import '../data/repositories/outfit_repository.dart';
 
 class OutfitsProvider extends ChangeNotifier {
-  OutfitsProvider(this._repo);
+  OutfitsProvider(this._repo, {DateTime Function()? clock})
+    : _clock = clock ?? DateTime.now;
 
   final OutfitRepository _repo;
+  final DateTime Function() _clock;
 
   List<Outfit> _outfits = const [];
   bool _isLoading = true;
@@ -51,7 +53,7 @@ class OutfitsProvider extends ChangeNotifier {
     required List<ClothingItem> items,
   }) async {
     final saved = await _repo.save(
-      Outfit(name: name, mood: mood, items: items, createdAt: DateTime.now()),
+      Outfit(name: name, mood: mood, items: items, createdAt: _clock()),
     );
     await load();
     return saved;
