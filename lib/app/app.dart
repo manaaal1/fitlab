@@ -66,11 +66,11 @@ class FitLabApp extends StatelessWidget {
           )..load(),
         ),
         ChangeNotifierProvider(
-  create: (_) => OutfitsProvider(
-    dependencies.outfitRepository,
-    clock: dependencies.clock,
-  )..load(),
-),
+          create: (_) => OutfitsProvider(
+            dependencies.outfitRepository,
+            clock: dependencies.clock,
+          )..load(),
+        ),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settings, _) => MaterialApp(
